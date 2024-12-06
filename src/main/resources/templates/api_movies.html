@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Buscar Peliculas</title>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" />
+    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <h1 style="margin-right: 20px; margin-left: 20px;">Buscar Pelicula</h1>
+
+    <!-- formulario de busqueda -->
+    <form th:action="@{/consumeApiMovies}" method="get">
+        <label for="title" style="margin-right: 20px; margin-left: 20px;">Titulo de la pelicula:</label>
+        <input type="text" id="title" name="title" th:value="${title}" required placeholder="Ej. Inception">
+        <button type="submit">Buscar</button>
+    </form>
+
+    <hr>
+
+    <!-- mostrar mensaje si no hay resultados pero solo cuando se realiza una búsqueda -->
+    <div th:if="${title != null and title != '' and (movieData == null or movieData.isEmpty())}">
+        <h3 style="color: red; text-align: center;">Búsqueda sin resultados</h3>
+    </div>
+    
+    <!-- detalles de la pelicula -->
+    <div th:if="${movieData != null && !movieData.isEmpty()}">
+        <!-- paginacion -->
+        <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
+            <a th:href="@{/api(title=${title}, page=${currentPage - 1})}" 
+               th:if="${currentPage > 1}" 
+               class="btn btn-secondary" style="margin-right: 10px;">Anterior</a>
+            
+            <!-- pagina actual y num de paginas -->
+            <span th:text="'Página ' + ${currentPage} + ' / ' + ${totalPages}" 
+                  style="margin-right: 10px; font-weight: bold;"></span>
+            
+            <a th:href="@{/api(title=${title}, page=${currentPage + 1})}" 
+               th:if="${currentPage < totalPages && movieData.size() == 10}" 
+               class="btn btn-primary">Siguiente</a>
+        </div>
+
+        <h2 style="margin-right: 20px; margin-left: 20px;">Resultados de la busqueda</h2>
+        
+        <div th:each="movie : ${movieData}" style="display: flex; align-items: center; margin-bottom: 20px;">
+            <img th:src="${movie['Poster']}" alt="Poster de la película" style="width: 100px; margin-right: 20px; margin-left: 20px;">
+            
+            <div>
+                <p><strong>Titulo:</strong>
+                    <a th:href="@{/movie/details/{id}(id=${movie['imdbID']})}" th:text="${movie['Title']}">Titulo de la pelicula</a>
+                </p>
+                <p><strong>Año:</strong> <span th:text="${movie['Year']}">Año</span></p>
+                <p><strong>IMDb ID:</strong> <span th:text="${movie['imdbID']}">ID de IMDb</span></p>
+            </div>
+        </div>
+
+        <!-- paginacion -->
+        <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
+            <a th:href="@{/api(title=${title}, page=${currentPage - 1})}" 
+               th:if="${currentPage > 1}" 
+               class="btn btn-secondary" style="margin-right: 10px;">Anterior</a>
+            
+            <!-- pagina actual y num de paginas -->
+            <span th:text="'Página ' + ${currentPage} + ' / ' + ${totalPages}" 
+                  style="margin-right: 10px; font-weight: bold;"></span>
+            
+            <a th:href="@{/api(title=${title}, page=${currentPage + 1})}" 
+               th:if="${currentPage < totalPages && movieData.size() == 10}" 
+               class="btn btn-primary">Siguiente</a>
+        </div>
+    </div>
+
+    <!-- boton regresar -->
+    <div style="margin: 20px; text-align: center;">
+        <a href="/welcome" class="btn btn-secondary">Regresar a Inicio</a>
+    </div>
+</body>
+</html>

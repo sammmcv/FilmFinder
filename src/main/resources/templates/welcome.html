@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Welcome Page</title>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" />
+    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            position: fixed;
+            top: 0;
+            background-color: #f8f9fa;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        .profile-img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+        }
+        .content {
+            text-align: center;
+            margin-top: 100px; /* espacio para el header fijo */
+        }
+        .update-photo-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <img th:src="'data:image/jpeg;base64,' + ${photoBase64}" alt="Foto de perfil" class="profile-img" />
+        </div>
+        <div>
+            <h1>Bienvenido <b th:text="${fullName}">Usuario</b></h1>
+            <p>Su correo: <b th:text="${email}">example@example.com</b></p>
+        </div>
+        <div class="update-photo-form">
+            <form th:action="@{/update_photo}" method="post" enctype="multipart/form-data">
+                <label for="profilePicture">Actualizar Foto:</label>
+                <input type="file" name="profilePicture" class="form-control-file" accept="image/*" required />
+                <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Actualizar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- mensaje para usuarios regulares -->
+        <div sec:authorize="hasRole('ROLE_USER')" style="margin-top: 20px;">
+            <p>Usuario: solo puede visualizar su informacion personal en una pagina de perfil, sin permisos para modificar ni eliminar registros, con excepcion de su foto de perfil.</p>
+        </div>
+
+        <!-- mensaje para administradores -->
+        <div sec:authorize="hasRole('ROLE_ADMIN')" style="margin-top: 20px;">
+            <p>Administrador: tiene acceso completo para gestionar los usuarios y realizar operaciones CRUD sobre la base de datos.</p>
+            <h3><a th:href="@{/users}">Gestion de usuarios</a></h3>
+            <h3><a th:href="@{/consumeApiMovies}">Open Movie Database</a></h3>
+            <h3><a th:href="@{/consumeApiBooks}">Open Library</a></h3>
+        </div>
+
+        <!-- logout -->
+        <form th:action="@{/logout}" method="post" style="margin-top: 20px;">
+            <input type="submit" class="btn btn-danger" value="Cerrar Sesion" />
+        </form>
+        <!--<p>Roles actuales: <span sec:authentication="principal.authorities"></span></p> -->
+        
+    </div>
+</body>
+</html>

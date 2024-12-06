@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Lista de Usuarios</title>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" />
+    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <script type="text/javascript" src="/webjars/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/webjars/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+        // confirmar antes de eliminar un usuario con AJAX
+        function confirmDelete(userId) {
+            console.log("Intentando eliminar el usuario con ID: " + userId);
+
+            if (confirm('Esta seguro de que desea eliminar este usuario?')) {
+                var csrfToken = $("meta[name='_csrf']").attr("content");
+                var csrfHeader = $("meta[name='_csrf_header']").attr("content");
+
+                $.ajax({
+                    url: '/deleteUser/' + userId,
+                    type: 'DELETE',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader(csrfHeader, csrfToken);  // agregar el token CSRF a la solicitud
+                    },
+                    success: function(result) {
+                        console.log("Usuario eliminado exitosamente: " + userId);
+                        $('#user-row-' + userId).remove();  // remover la fila de la tabla
+                    },
+                    error: function(err) {
+                        console.error('Error al eliminar el usuario con ID: ' + userId, err);
+                        alert('Error al eliminar el usuario');
+                    }
+                });
+            }
+        }
+    </script>
+    <style>
+        /* estilos personalizados para ajustar el ancho de columnas */
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        .column-id {
+            width: 80px; /* reducir ancho de la columna ID */
+        }
+        .column-email {
+            width: 180px; /* reducir ancho de la columna correo */
+        }
+        .column-foto {
+            width: 140px; /* ancho ajustado para columna foto */
+        }
+        .column-rol {
+            width: 120px; /* ancho ajustado para columna rol */
+        }
+        .column-act {
+            width: 200px;
+        }
+        
+        /* estilo para asegurar el formato 1x1 en las fotos */
+        .img-square {
+            width: 100px; /* tamaño fijo de la imagen */
+            height: 100px; /* altura igual a la anchura para 1:1 */
+            object-fit: cover; /* ajusta la imagen a las dimensiones sin deformarla */
+            border-radius: 5px; /* opcional: bordes redondeados */
+        }
+    </style>
+</head>
+<body>
+<div class="container text-center">
+    <!-- boton para ir a la pagina de bienvenida -->
+    <div class="my-3">
+        <a href="/welcome" class="btn btn-info">Ir a Bienvenida</a>
+    </div>
+
+    <div>
+        <form th:action="@{/logout}" method="post">
+            <p>
+                Bienvenido <b th:text="${fullName}">Usuario</b>
+            </p>
+            <input type="submit" value="Cerrar Sesion" />
+        </form>
+    </div>
+    
+    <div>
+        <h1>Lista de Usuarios</h1>
+    </div>
+
+    <div>
+        <table class="table table-striped table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th class="column-id">ID</th> <!-- columna id mas chica -->
+                    <th class="column-email">Correo Electronico</th> <!-- columna correo mas chica -->
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th class="column-foto">Foto</th> <!-- columna foto mas ancha -->
+                    <th class="column-rol">Rol</th> <!-- columna rol mas angosta -->
+                    <th class="column-act">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="user : ${listUsers}" id="user-row-[[${user.id}]]">
+                    <td th:text="${user.id}">ID Usuario</td>
+                    <td th:text="${user.email}">Correo Electronico</td>
+                    <td th:text="${user.firstName}">Nombre</td>
+                    <td th:text="${user.lastName}">Apellido</td>
+                    <!-- columna de foto con imagen en formato base64 -->
+                    <td>
+                        <img th:src="'data:image/jpeg;base64,' + ${user.photoBase64}" alt="Foto de perfil" class="img-square" />
+                    </td>
+                    <td>
+                        <form th:action="@{/updateUserRole/{id}(id=${user.id})}" method="post">
+                            <select name="role" id="user-role-[[${user.id}]]" class="form-control">
+                                <option value="USER" th:selected="${user.role == 'USER'}">User</option>
+                                <option value="ADMIN" th:selected="${user.role == 'ADMIN'}">Admin</option>
+                            </select>
+                            <!-- aceptar button to submit the form -->
+                            <button type="submit" class="btn btn-success">Aceptar</button>
+                        </form>
+                    </td>
+                    <!-- mostrar opciones de editar/eliminar solo si el usuario tiene rol ADMIN -->
+                    <td>
+                        <div sec:authorize="hasRole('ADMIN')">
+                            <a th:href="@{/editUser/{id}(id=${user.id})}" class="btn btn-primary">Editar</a>
+                    
+                            <!-- formulario para eliminar usuario -->
+                            <form th:action="@{/deleteUser/{id}(id=${user.id})}" method="post" style="display:inline;">
+                                <input type="hidden" name="_method" value="DELETE"/>
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Esta seguro de que desea eliminar este usuario?');">Eliminar</button>
+                            </form>
+                        </div>
+                    </td>
+                    
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
