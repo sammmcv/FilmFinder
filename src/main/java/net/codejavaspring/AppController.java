@@ -25,6 +25,8 @@ import jakarta.servlet.http.HttpSession;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 @Controller
 public class AppController {
@@ -175,37 +177,71 @@ public class AppController {
             return "api_movie_details"; // vsta con los detalles de la película individual
         }
 
+        @SuppressWarnings("unchecked") // por el cambio a hashmap
         @GetMapping("/apiMovieFavorites")
-        public String showFavoritesPage(Model model) {
-            
+        public String showFavoritesPage(
+            @RequestParam(required = false) String title,
+            @RequestParam(defaultValue = "1") int page,
+            Model model) {
+
             // Obtener datos del usuario
             Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             Long userId = null;
-            if (principal instanceof CustomUserDetails) { // user local
+
+            if (principal instanceof CustomUserDetails) { // Usuario local
                 CustomUserDetails userDetails = (CustomUserDetails) principal;
                 userId = userDetails.getId();
-            } else if (principal instanceof DefaultOAuth2User) {// user con Google
+            } else if (principal instanceof DefaultOAuth2User) { // Usuario con Google
                 DefaultOAuth2User oauth2User = (DefaultOAuth2User) principal;
                 String email = oauth2User.getAttribute("email");
-                // Obtener el usuario desde la base de datos para obtener el userId para guardar en la foreingkey de la tabla favs
+                // Obtener el usuario desde la base de datos para obtener el userId
                 User user = userRepo.findByEmail(email);
                 if (user != null) {
                     userId = user.getId(); // id guardada en la BD local
                 }
             } else {
-                throw new IllegalStateException("tpo de usuario no soportado: " + principal.getClass().getName());
+                throw new IllegalStateException("Tipo de usuario no soportado: " + principal.getClass().getName());
             }
+
             // Obtener las películas favoritas del usuario desde la base de datos
             List<ApiMovies> favoriteMovies = apiMoviesRepository.findByUserId(userId);
-            
-            // Pasar los datos al modelo
+
+            // Si el usuario no tiene películas favoritas, no realizamos búsqueda de recomendaciones
+            if (favoriteMovies == null || favoriteMovies.isEmpty()) {
+                model.addAttribute("favoriteMovies", favoriteMovies);
+                return "api_movie_favorites"; // Si no tiene favoritos, solo mostramos la vista sin recomendaciones
+            }
+
+            // Seleccionamos aleatoriamente un título de las películas favoritas
+            Random random = new Random();
+            ApiMovies randomFavorite = favoriteMovies.get(random.nextInt(favoriteMovies.size()));
+            String randomTitle = randomFavorite.getTitle();
+
+            // Llamar a la API para obtener recomendaciones basadas en el título aleatorio
+            HashMap<String, Object> response = apiMoviesService.searchMoviesWithPagination(randomTitle, page);
+
+            // Obtener las recomendaciones
+            List<HashMap<String, Object>> recommendedMovies = (List<HashMap<String, Object>>) response.get("Search");
+
+            // Filtrar las recomendaciones para eliminar la que coincide exactamente con el título favorito
+            recommendedMovies = recommendedMovies.stream()
+                .filter(movie -> !movie.get("Title").equals(randomTitle))
+                .collect(Collectors.toList());
+
+            // Calcular el total de páginas
+            int totalResults = Integer.parseInt((String) response.get("totalResults"));
+            int totalPages = (int) Math.ceil(totalResults / 10.0); // Calcular el total de páginas
+
+            // Agregar los atributos al modelo
             model.addAttribute("favoriteMovies", favoriteMovies);
-            
-            // ID del usuario al modelo para que esté disponible en la vista
-            model.addAttribute("userId", userId);
-            // Aquí podrías agregar lógica si es necesario (como comprobar si el usuario tiene favoritos).
-            return "api_movie_favorites"; // Redirige a la vista de favoritos.
+            model.addAttribute("randomTitle", randomTitle); // El título aleatorio usado para las recomendaciones
+            model.addAttribute("recommendedMovies", recommendedMovies); // Recomendaciones filtradas
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", totalPages);
+
+            return "api_movie_favorites"; // Regresar a la vista de favoritos con las recomendaciones
         }
+
 
         @GetMapping("/apiMovieFavoritesGeneral")
         public String showFavoritesGeneralPage(Model model) {

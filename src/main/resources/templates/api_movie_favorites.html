@@ -35,7 +35,7 @@
                     <td>
                         <!-- Formulario para eliminar la película favorita -->
                         <form th:action="@{/removeFavorite}" method="post" style="display:inline;">
-                            <input type="hidden" name="id" th:value="${movie.id}"/> <!-- Aquí corriges el typo 'th:tdlue' a 'th:value' -->
+                            <input type="hidden" name="id" th:value="${movie.id}"/>
                             <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta película de tus favoritos?');">
                                 Eliminar
                             </button>
@@ -44,17 +44,53 @@
                 </tr>
             </tbody>
         </table>
+
+        <!-- Si el usuario tiene películas favoritas, mostrar las recomendaciones -->
+        <div th:if="${favoriteMovies != null and favoriteMovies.size() > 0}">
+            <h2 class="my-4">Recomendaciones:</h2>
+            
+            <!-- Muestra el título usado para las recomendaciones -->
+            <p th:text="'Buscando recomendaciones para: ' + ${randomTitle}"></p>
+
+            <!-- Mostrar las películas recomendadas en dos columnas -->
+            <div class="row">
+                <!-- Iteramos sobre la lista de recomendaciones -->
+                <div class="col-md-6" th:each="movie : ${recommendedMovies}">
+                    <div class="d-flex mb-4">
+                        <img th:src="${movie['Poster']}" alt="Póster de la película" style="width: 100px; margin-right: 20px; margin-left: 20px;">
+                        <div>
+                            <p><strong>Título:</strong>
+                                <a th:href="@{/movie/details/{id}(id=${movie['imdbID']})}" th:text="${movie['Title']}">Título de la película</a>
+                            </p>
+                            <p><strong>Año:</strong> <span th:text="${movie['Year']}">Año</span></p>
+                            <p><strong>IMDb ID:</strong> <span th:text="${movie['imdbID']}">ID de IMDb</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paginación de recomendaciones -->
+            <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
+                <a th:href="@{/apiMovieFavorites(title=${randomTitle}, page=${currentPage - 1})}" 
+                    th:if="${currentPage > 1}" class="btn btn-secondary" style="margin-right: 10px;">Anterior</a>
+                <a th:href="@{/apiMovieFavorites(title=${randomTitle}, page=${currentPage + 1})}" 
+                    th:if="${currentPage < totalPages}" class="btn btn-primary">Siguiente</a>
+            </div>
+            <div style="margin: 20px; text-align: center;">
+                <a href="/welcome" class="btn btn-secondary">Regresar a Inicio</a>
+            </div>
+        </div>
+
+        <!-- Mensaje si no hay recomendaciones -->
+        <div th:if="${favoriteMovies == null or favoriteMovies.size() == 0}">
+            <p>No se encontraron recomendaciones para ti.</p>
+        </div>
+
+        <!-- Información adicional sobre el usuario -->
+        <div>
+            <p th:text="'Número de películas favoritas: ' + ${favoriteMovies.size()}"></p>
+            <p th:text="'UserId recibido: ' + ${userId}"></p>
+        </div>
     </div>
-    <div th:if="${favoriteMovies == null}">
-        <p>No se encontraron películas favoritas para este usuario.</p>
-    </div>
-    <div th:if="${favoriteMovies != null}">
-        <p th:text="'Número de películas favoritas: ' + ${favoriteMovies.size()}"></p>
-    </div>
-    <div>
-        <p th:text="'userId recibido: ' + ${userId}"></p>
-    </div>
-    
-    
 </body>
 </html>
