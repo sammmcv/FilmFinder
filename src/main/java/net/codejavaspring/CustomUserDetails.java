@@ -13,15 +13,23 @@ public class CustomUserDetails implements UserDetails {
     private User user; // declaracion
 
     public CustomUserDetails(User user) { // constructor
-        this.user = user; 
+        this.user = user;
     }
 
+     // Método para obtener el ID del usuario
+    public Long getId() {
+        return user.getId(); // Suponiendo que tienes un método getId() en la clase User
+    }
 
     @Override // obtener el rol del usuario
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        System.out.println("User role: " + user.getRole()); // Depuración
+        // Depuración: Mostrar el ID del usuario y su rol en la consola
+        System.out.println("User ID: " + user.getId() + " | Role: " + user.getRole());
+        
+        // Retorna la colección con el rol del usuario
         return Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
     }
+
 
     @Override // para obtener password de usuario
     public String getPassword() {

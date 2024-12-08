@@ -1,5 +1,6 @@
 package net.codejavaspring;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
@@ -12,6 +13,14 @@ public class ApiMoviesService {
     private final RestTemplate restTemplate;
     private static final String API_KEY = "3afbf06";
     private static final String API_URL = "https://www.omdbapi.com/";
+
+    @Autowired
+    private ApiMoviesRepository apiMoviesRepository;
+
+    public void saveApiMovie(String movieId, Long userId, String title, int year, String director, String genre, String plot, String posterUrl) {
+        ApiMovies apiMovie = new ApiMovies(movieId, userId, title, year, director, genre, plot, posterUrl);
+        apiMoviesRepository.save(apiMovie); // Guardar la película en la base de datos
+    }
 
     @SuppressWarnings("unchecked")
     public HashMap<String, Object> searchMoviesWithPagination(String title, int page) {

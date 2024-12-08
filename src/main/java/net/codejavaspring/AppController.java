@@ -25,10 +25,16 @@ import java.util.Map;
 @Controller
 public class AppController {
     @Autowired
-    private CustomUserDetailsService userRepository; 
+    private CustomUserDetailsService userRepository;
 
     @Autowired
-    private ApiMoviesService ApiMoviesService;
+    private ApiMoviesRepository apiMoviesRepository;
+
+    @Autowired
+    private UserRepository userRepo;
+
+    @Autowired
+    private ApiMoviesService apiMoviesService;
     @Autowired
     private ApiBooksService ApiBooksService;
 
@@ -47,7 +53,7 @@ public class AppController {
             }
         
             // llama al servicio para buscar películas
-            HashMap<String, Object> response = ApiMoviesService.searchMoviesWithPagination(title, page);
+            HashMap<String, Object> response = apiMoviesService.searchMoviesWithPagination(title, page);
         
             // obtiene los datos de películas
             List<HashMap<String, Object>> movies = (List<HashMap<String, Object>>) response.get("Search");
@@ -67,11 +73,67 @@ public class AppController {
         }
         
 
-    @GetMapping("/movie/details/{id}")
+        @GetMapping("/movie/details/{id}")
         public String getMovieDetails(@PathVariable("id") String imdbID, Model model) {
-            HashMap<String, Object> movieDetails = ApiMoviesService.getMovieByImbdId(imdbID);
+            // Obtener los detalles de la película
+            HashMap<String, Object> movieDetails = apiMoviesService.getMovieByImbdId(imdbID);
             model.addAttribute("movieDetails", movieDetails);
-            return "api_movie_details"; // vista con los detalles de la película individual
+        
+            // Obtener datos del usuario
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            Long userId = null;
+        
+            if (principal instanceof CustomUserDetails) { // user local
+                CustomUserDetails userDetails = (CustomUserDetails) principal;
+                userId = userDetails.getId();
+            } else if (principal instanceof DefaultOAuth2User) {// user con Google
+                DefaultOAuth2User oauth2User = (DefaultOAuth2User) principal;
+                String email = oauth2User.getAttribute("email");
+                // Obtener el usuario desde la base de datos para obtener el userId para guardar en la foreingkey de la tabla favs
+                User user = userRepo.findByEmail(email);
+                if (user != null) {
+                    userId = user.getId(); // id guardada en la BD local
+                }
+            } else {
+                throw new IllegalStateException("tpo de usuario no soportado: " + principal.getClass().getName());
+            }
+        
+            // ID del usuario al modelo para que esté disponible en la vista
+            model.addAttribute("userId", userId);
+        
+            return "api_movie_details"; // vsta con los detalles de la película individual
+        }
+
+        @GetMapping("/apiMovieFavorites")
+        public String showFavoritesPage(Model model) {
+            
+            // Obtener datos del usuario
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            Long userId = null;
+            if (principal instanceof CustomUserDetails) { // user local
+                CustomUserDetails userDetails = (CustomUserDetails) principal;
+                userId = userDetails.getId();
+            } else if (principal instanceof DefaultOAuth2User) {// user con Google
+                DefaultOAuth2User oauth2User = (DefaultOAuth2User) principal;
+                String email = oauth2User.getAttribute("email");
+                // Obtener el usuario desde la base de datos para obtener el userId para guardar en la foreingkey de la tabla favs
+                User user = userRepo.findByEmail(email);
+                if (user != null) {
+                    userId = user.getId(); // id guardada en la BD local
+                }
+            } else {
+                throw new IllegalStateException("tpo de usuario no soportado: " + principal.getClass().getName());
+            }
+            // Obtener las películas favoritas del usuario desde la base de datos
+            List<ApiMovies> favoriteMovies = apiMoviesRepository.findByUserId(userId);
+            
+            // Pasar los datos al modelo
+            model.addAttribute("favoriteMovies", favoriteMovies);
+            
+            // ID del usuario al modelo para que esté disponible en la vista
+            model.addAttribute("userId", userId);
+            // Aquí podrías agregar lógica si es necesario (como comprobar si el usuario tiene favoritos).
+            return "api_movie_favorites"; // Redirige a la vista de favoritos.
         }
 
         @SuppressWarnings("unchecked")
@@ -112,9 +174,6 @@ public class AppController {
             return "api_book_details"; // Vista con los detalles del libro
         }
 
-
-    @Autowired
-    private UserRepository userRepo;
     
     @GetMapping("") // redireccion a la pagina de inicio (sin iniciar sesion)
         public String viewHomePage() {
@@ -142,6 +201,48 @@ public class AppController {
                 model.addAttribute("loginError", "User o password incorrectos, intenta de nuevo");
             }
             return "login";
+        }
+
+        @PostMapping("/saveMovie")
+        public String saveMovie(@RequestParam("imbdID") String imdbID, 
+                                @RequestParam("userId") Long userId,
+                                @RequestParam("title") String title, 
+                                @RequestParam("year") int year,
+                                @RequestParam("director") String director,
+                                @RequestParam("genre") String genre,
+                                @RequestParam("plot") String plot,
+                                @RequestParam("posterUrl") String posterUrl) {
+            // Llamar al servicio para guardar la película con todos los datos
+            apiMoviesService.saveApiMovie(imdbID, userId, title, year, director, genre, plot, posterUrl);
+        
+            // Redirigir a la página de detalles de la película
+            return "redirect:/movie/details/" + imdbID; 
+        }
+
+        @PostMapping("/removeFavorite")
+        public String removeFavorite(@RequestParam("id") Long favoriteId, Model model) {
+            // Eliminar la película favorita por su id
+            apiMoviesRepository.deleteById(favoriteId);
+            return "redirect:/apiMovieFavorites"; // Redirigir a la página de favoritos
+        }
+
+        
+        @GetMapping("/favorites")
+        public String getFavorites(@RequestParam("userId") Long userId, Model model) {
+            // Depuración: Verificar si el userId está llegando correctamente
+            System.out.println("Recibiendo request para userId: " + userId);
+            
+            // Recuperar las películas guardadas por el usuario desde el repositorio
+            List<ApiMovies> favoriteMovies = apiMoviesRepository.findByUserId(userId);
+            
+            // Depuración: Verificar cuántas películas fueron encontradas
+            System.out.println("Películas encontradas para el userId " + userId + ": " + favoriteMovies.size());
+            
+            // Pasar la lista de películas al modelo
+            model.addAttribute("favoriteMovies", favoriteMovies);
+            
+            // Retornar la vista para mostrar las películas
+            return "api_movie_favorites";
         }
 
     @PostMapping("/process_register") // redireccion a la pagina de registro
