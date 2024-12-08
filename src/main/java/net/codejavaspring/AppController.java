@@ -2,6 +2,7 @@ package net.codejavaspring;
 
 import java.util.List;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.util.Map;
 
@@ -35,16 +39,74 @@ public class AppController {
 
     @Autowired
     private ApiMoviesService apiMoviesService;
+
     @Autowired
     private ApiBooksService ApiBooksService;
 
+    @Autowired
+    private SearchHistoryRepository searchHistoryRepository;
+    
+    @GetMapping("/movieHistory") // Botón de historial
+    public String searchMovies(@RequestParam(required = false) String title, 
+                                HttpSession session, Model model) {
+        
+        // Obtener datos del usuario
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = null;
+    
+        if (principal instanceof CustomUserDetails) { // Usuario local
+            CustomUserDetails userDetails = (CustomUserDetails) principal;
+            userId = userDetails.getId();
+        } else if (principal instanceof DefaultOAuth2User) { // Usuario con Google
+            DefaultOAuth2User oauth2User = (DefaultOAuth2User) principal;
+            String email = oauth2User.getAttribute("email");
+            // Obtener el usuario desde la base de datos
+            User user = userRepo.findByEmail(email);
+            if (user != null) {
+                userId = user.getId(); // id guardada en la BD local
+            }
+        } else {
+            throw new IllegalStateException("Tipo de usuario no soportado: " + principal.getClass().getName());
+        }
+    
+        // Obtener el historial de búsqueda para el usuario actual
+        List<SearchHistory> searchHistory = searchHistoryRepository.findByUserId(userId);
+        
+        // Obtener el historial de búsqueda para todos los usuarios (si el usuario tiene rol de ADMIN)
+        List<SearchHistory> allSearchHistory = searchHistoryRepository.findAll();
+    
+        // Agregar los historiales al modelo
+        model.addAttribute("searchHistory", searchHistory);
+        model.addAttribute("allSearchHistory", allSearchHistory);
+    
+        return "api_movie_history"; // Redirige a la vista de historial
+    }
+    
         @SuppressWarnings("unchecked") // por el cambio a hashmap
         @GetMapping("/consumeApiMovies")
         public String searchMovies(
             @RequestParam(required = false) String title,
             @RequestParam(defaultValue = "1") int page,
             Model model) {
-        
+            
+        // Obtener datos del usuario
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = null;
+    
+        if (principal instanceof CustomUserDetails) { // Usuario local
+            CustomUserDetails userDetails = (CustomUserDetails) principal;
+            userId = userDetails.getId();
+        } else if (principal instanceof DefaultOAuth2User) { // Usuario con Google
+            DefaultOAuth2User oauth2User = (DefaultOAuth2User) principal;
+            String email = oauth2User.getAttribute("email");
+            // Obtener el usuario desde la base de datos
+            User user = userRepo.findByEmail(email);
+            if (user != null) {
+                userId = user.getId(); // id guardada en la BD local
+            }
+        } else {
+            throw new IllegalStateException("Tipo de usuario no soportado: " + principal.getClass().getName());
+        } 
             // verifica si el usuario no ingresó un título y muestra solo el formulario
             if (title == null || title.trim().isEmpty()) {
                 model.addAttribute("movieData", null);
@@ -68,6 +130,15 @@ public class AppController {
             model.addAttribute("title", title);
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", totalPages);
+    
+        // Guardar el término de búsqueda en la base de datos si el título no está vacío
+        if (title != null && !title.isEmpty()) {
+            SearchHistory history = new SearchHistory();
+            history.setUserId(userId);
+            history.setSearchTerm(title);
+            history.setTimestamp(LocalDateTime.now());
+            searchHistoryRepository.save(history);  // Guardar en la base de datos
+        }
         
             return "api_movies"; // vuelve a la vista
         }
@@ -147,7 +218,28 @@ public class AppController {
             // No es necesario pasar el userId porque ya no lo estamos filtrando por el usuario actual
             return "api_movie_favorites_general"; // Redirige a la vista de favoritos generales
         }
+        @PostMapping("/saveMovie")
+        public String saveMovie(@RequestParam("imbdID") String imdbID, 
+                                @RequestParam("userId") Long userId,
+                                @RequestParam("title") String title, 
+                                @RequestParam("year") int year,
+                                @RequestParam("director") String director,
+                                @RequestParam("genre") String genre,
+                                @RequestParam("plot") String plot,
+                                @RequestParam("posterUrl") String posterUrl) {
+            // Llamar al servicio para guardar la película con todos los datos
+            apiMoviesService.saveApiMovie(imdbID, userId, title, year, director, genre, plot, posterUrl);
+        
+            // Redirigir a la página de detalles de la película
+            return "redirect:/movie/details/" + imdbID; 
+        }
 
+        @PostMapping("/removeFavorite")
+        public String removeFavorite(@RequestParam("id") Long favoriteId, Model model) {
+            // Eliminar la película favorita por su id
+            apiMoviesRepository.deleteById(favoriteId);
+            return "redirect:/apiMovieFavorites"; // Redirigir a la página de favoritos
+        }
         
         @SuppressWarnings("unchecked")
         @GetMapping("/consumeApiBooks")
@@ -215,30 +307,6 @@ public class AppController {
             }
             return "login";
         }
-
-        @PostMapping("/saveMovie")
-        public String saveMovie(@RequestParam("imbdID") String imdbID, 
-                                @RequestParam("userId") Long userId,
-                                @RequestParam("title") String title, 
-                                @RequestParam("year") int year,
-                                @RequestParam("director") String director,
-                                @RequestParam("genre") String genre,
-                                @RequestParam("plot") String plot,
-                                @RequestParam("posterUrl") String posterUrl) {
-            // Llamar al servicio para guardar la película con todos los datos
-            apiMoviesService.saveApiMovie(imdbID, userId, title, year, director, genre, plot, posterUrl);
-        
-            // Redirigir a la página de detalles de la película
-            return "redirect:/movie/details/" + imdbID; 
-        }
-
-        @PostMapping("/removeFavorite")
-        public String removeFavorite(@RequestParam("id") Long favoriteId, Model model) {
-            // Eliminar la película favorita por su id
-            apiMoviesRepository.deleteById(favoriteId);
-            return "redirect:/apiMovieFavorites"; // Redirigir a la página de favoritos
-        }
-
 
     @PostMapping("/process_register") // redireccion a la pagina de registro
         public String processRegister(User user, @RequestParam("profilePicture") MultipartFile imageFile) { // para la foto de perfil
@@ -355,10 +423,19 @@ public class AppController {
             }
         }
 
-    @PostMapping("/deleteUser/{id}") // no hay pagina
+        @PostMapping("/deleteUser/{id}")
         public String deleteUser(@PathVariable("id") Long id) {
-            userRepo.deleteById(id);  // eliminar el usuario
-            return "redirect:/users";  // redirige de nuevo a la lista de usuarios
+            // Eliminar el historial de búsquedas asociado al usuario
+            searchHistoryRepository.deleteByUserId(id);
+            
+            // Eliminar las películas favoritas asociadas al usuario
+            apiMoviesRepository.deleteByUserId(id);
+    
+            // Eliminar el usuario
+            userRepo.deleteById(id);
+            
+            // Redirigir a la lista de usuarios
+            return "redirect:/users";
         }
 
     @GetMapping("/editUser/{id}")
