@@ -64,13 +64,25 @@
         
 
     </div>
-    <!-- boton de favoritos -->
-    <div style="margin: 20px; text-align: center;">
+    <!-- Sección de botones de acción -->
+<div style="margin: 20px; text-align: center;">
+
+    <!-- Botón solo visible para administradores -->
+    <div sec:authorize="hasRole('ROLE_ADMIN')">
+        <a href="/apiMovieFavoritesGeneral" class="btn btn-warning">Ver Favoritos de Todos</a>
+    </div>
+
+    <!-- Botón visible para todos los usuarios -->
+    <div sec:authorize="hasAnyRole('ROLE_USER', 'ROLE_ADMIN')">
         <a href="/apiMovieFavorites" class="btn btn-warning">Ver Favoritos</a>
     </div>
-    <!-- boton regresar -->
+
+    <!-- Botón regresar -->
     <div style="margin: 20px; text-align: center;">
         <a href="/welcome" class="btn btn-secondary">Regresar a Inicio</a>
     </div>
+
+</div>
+
 </body>
 </html>

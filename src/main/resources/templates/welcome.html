@@ -68,6 +68,7 @@
         <!-- mensaje para usuarios regulares -->
         <div sec:authorize="hasRole('ROLE_USER')" style="margin-top: 20px;">
             <p>Usuario: solo puede visualizar su informacion personal en una pagina de perfil, sin permisos para modificar ni eliminar registros, con excepcion de su foto de perfil.</p>
+            <h3><a th:href="@{/consumeApiMovies}">Open Movie Database</a></h3>
         </div>
 
         <!-- mensaje para administradores -->

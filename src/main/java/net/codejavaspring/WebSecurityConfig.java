@@ -47,11 +47,11 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/admin/**").hasRole("ADMIN") // Rutas restringidas al rol ADMIN
                 .requestMatchers("/users").hasRole("ADMIN")
-                .requestMatchers("/consumeApiMovies").hasRole("ADMIN")
+                .requestMatchers("/consumeApiMovies").authenticated()
                 .requestMatchers("/consumeApiBooks").hasRole("ADMIN")
                 .requestMatchers("/welcome").authenticated() // Autenticación para /welcome
                 .requestMatchers("/api").authenticated()
-                .requestMatchers("/movie/**").hasRole("ADMIN")
+                .requestMatchers("/movie/**").authenticated()
                 .requestMatchers("/editUser/**").hasRole("ADMIN")
                 .requestMatchers("/login", "/register", "/css/**", "/js/**", "/oauth2/authorization/**").permitAll() // Permite el acceso sin autenticación
                 .anyRequest().permitAll() // Permite el resto de rutas

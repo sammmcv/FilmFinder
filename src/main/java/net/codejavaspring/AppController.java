@@ -136,6 +136,19 @@ public class AppController {
             return "api_movie_favorites"; // Redirige a la vista de favoritos.
         }
 
+        @GetMapping("/apiMovieFavoritesGeneral")
+        public String showFavoritesGeneralPage(Model model) {
+            // Obtener todas las películas favoritas de todos los usuarios, ordenadas por userId
+            List<ApiMovies> favoriteMovies = apiMoviesRepository.findAllByOrderByUserIdAsc();
+            
+            // Pasar las películas al modelo
+            model.addAttribute("favoriteMovies", favoriteMovies);
+            
+            // No es necesario pasar el userId porque ya no lo estamos filtrando por el usuario actual
+            return "api_movie_favorites_general"; // Redirige a la vista de favoritos generales
+        }
+
+        
         @SuppressWarnings("unchecked")
         @GetMapping("/consumeApiBooks")
         public String searchBooks(
@@ -226,24 +239,6 @@ public class AppController {
             return "redirect:/apiMovieFavorites"; // Redirigir a la página de favoritos
         }
 
-        
-        @GetMapping("/favorites")
-        public String getFavorites(@RequestParam("userId") Long userId, Model model) {
-            // Depuración: Verificar si el userId está llegando correctamente
-            System.out.println("Recibiendo request para userId: " + userId);
-            
-            // Recuperar las películas guardadas por el usuario desde el repositorio
-            List<ApiMovies> favoriteMovies = apiMoviesRepository.findByUserId(userId);
-            
-            // Depuración: Verificar cuántas películas fueron encontradas
-            System.out.println("Películas encontradas para el userId " + userId + ": " + favoriteMovies.size());
-            
-            // Pasar la lista de películas al modelo
-            model.addAttribute("favoriteMovies", favoriteMovies);
-            
-            // Retornar la vista para mostrar las películas
-            return "api_movie_favorites";
-        }
 
     @PostMapping("/process_register") // redireccion a la pagina de registro
         public String processRegister(User user, @RequestParam("profilePicture") MultipartFile imageFile) { // para la foto de perfil

@@ -16,4 +16,7 @@ public interface ApiMoviesRepository extends JpaRepository<ApiMovies, Long> {
 
      // Obtener todas las películas guardadas por un usuario
     List<ApiMovies> findByUserId(Long userId);
+    // Obtener todas las películas favoritas de todos los usuarios ordenadas por userId
+    List<ApiMovies> findAllByOrderByUserIdAsc();
+
 }
