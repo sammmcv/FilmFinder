@@ -5,21 +5,21 @@ FROM eclipse-temurin:21.0.3_9-jdk
 EXPOSE 8080
 
 # DEFINIR DIRECTORIO RAIZ DE NUESTRO CONTENEDOR
-WORKDIR /root
+WORKDIR /app
 
 # COPIAR Y PEGAR ARCHIVOS DENTRO DEL CONTENEDOR
-COPY ./pom.xml /root/
-COPY ./.mvn /root/.mvn
-COPY ./mvnw /root/
+COPY ./pom.xml /app/
+COPY ./.mvn /app/.mvn
+COPY ./mvnw /app/
 
 # DESCARGAR LAS DEPENDENCIAS
 RUN ./mvnw dependency:go-offline
 
 # COPIAR EL CODIGO FUENTE DENTRO DEL CONTENEDOR
-COPY ./src /root/src
+COPY ./src /app/src
 
 # CONSTRUIR NUESTRA APLICACION
 RUN ./mvnw clean install -DskipTests
 
 # LEVANTAR NUESTRA APLICACION CUANDO EL CONTENEDOR INICIE
-ENTRYPOINT [ "java", "-jar", "/root/target/SpringBootRegistrationLogin-0.0.1-SNAPSHOT.jar" ]
+ENTRYPOINT [ "java", "-jar", "/app/target/SpringBootRegistrationLogin-0.0.1-SNAPSHOT.jar" ]
