@@ -1,5 +1,5 @@
 // con esta clase podemos almacenar y obtener informacion de los usuarios en la base de datos
-package net.codejavaspring;
+package net.codejavaspring.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

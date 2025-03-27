@@ -1,10 +1,13 @@
 // para adaptar la entidad user de la bd a ser utilizada en nuestro proyecto de spring.
-package net.codejavaspring;
+package net.codejavaspring.security;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails; // consumimos de este framework para manejar 
-                                                                // los detalles de un usuario en la base de datos
+
+import net.codejavaspring.model.User;
+
+// los detalles de un usuario en la base de datos
 import java.util.Collection;
 import java.util.Collections;
 
@@ -16,9 +19,9 @@ public class CustomUserDetails implements UserDetails {
         this.user = user;
     }
 
-     // Método para obtener el ID del usuario
+    // Método para obtener el ID del usuario
     public Long getId() {
-        return user.getId(); // Suponiendo que tienes un método getId() en la clase User
+        return user.getId();
     }
 
     @Override // obtener el rol del usuario

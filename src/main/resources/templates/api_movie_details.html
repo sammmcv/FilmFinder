@@ -1,95 +1,89 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Detalles de la Película</title>
-    <link rel="stylesheet" href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" />
-    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
-    <script src="/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-        }
-        .movie-card {
-            max-width: 800px;
-            margin: 20px auto;
-            background: #fff;
-            padding: 20px;
-            display: flex;
-            gap: 20px;
-        }
-        .movie-poster {
-            max-width: 200px;
-            border-radius: 5px;
-        }
-        .movie-info {
-            flex: 1;
-        }
-        .back-button {
-            display: flex;
-            justify-content: center; /* Centra horizontalmente */
-            margin-top: 20px;
-        }
-        .url-display, .last-segment-display {
-            margin-top: 20px;
-            font-weight: bold;
-        }
-        .user-id-display {
-            margin-top: 20px;
-            font-weight: bold;
-        }
-    </style>
+<head th:replace="~{fragments/layout :: head('Detalles de la Película')}">
 </head>
 <body>
-    <div class="container">
-        <div class="movie-card">
-            <!-- Póster de la película -->
-            <img th:src="${movieDetails['Poster']}" alt="Póster de la película" class="movie-poster">
-
-            <!-- Información de la película -->
-            <div class="movie-info">
-                <h1 th:text="${movieDetails['Title']}" class="mb-4">Título de la película</h1>
-                <p><strong>Año:</strong> <span th:text="${movieDetails['Year']}">Año</span></p>
-                <p><strong>Director:</strong> <span th:text="${movieDetails['Director']}">Director</span></p>
-                <p><strong>Género:</strong> <span th:text="${movieDetails['Genre']}">Género</span></p>
-                <p><strong>Resumen:</strong> <span th:text="${movieDetails['Plot']}">Resumen de la película</span></p>
+    <header th:replace="~{fragments/layout :: header}"></header>
+    
+    <div class="container py-4">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h2 class="mb-0" th:text="${movieDetails.Title}">Título de la Película</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-4 mb-md-0">
+                        <img th:src="${movieDetails.Poster != 'N/A' ? movieDetails.Poster : 'https://via.placeholder.com/300x450?text=No+Poster'}" 
+                             alt="Poster de la película" class="img-fluid rounded shadow">
+                        
+                        <!-- Botón para agregar a favoritos -->
+                        <div class="mt-3 text-center">
+                            <form th:action="@{/addToFavorites}" method="post" class="d-inline">
+                                <input type="hidden" name="movieId" th:value="${movieDetails.imdbID}">
+                                <input type="hidden" name="title" th:value="${movieDetails.Title}">
+                                <input type="hidden" name="year" th:value="${movieDetails.Year}">
+                                <input type="hidden" name="director" th:value="${movieDetails.Director}">
+                                <input type="hidden" name="genre" th:value="${movieDetails.Genre}">
+                                <input type="hidden" name="plot" th:value="${movieDetails.Plot}">
+                                <input type="hidden" name="posterUrl" th:value="${movieDetails.Poster}">
+                                
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-star me-1"></i> Agregar a Favoritos
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h4 class="mb-0">Información General</h4>
+                            </div>
+                            <div class="card-body">
+                                <p><strong><i class="fas fa-calendar-alt me-2"></i>Año:</strong> <span th:text="${movieDetails.Year}">Año</span></p>
+                                <p><strong><i class="fas fa-film me-2"></i>Género:</strong> <span th:text="${movieDetails.Genre}">Género</span></p>
+                                <p><strong><i class="fas fa-user-tie me-2"></i>Director:</strong> <span th:text="${movieDetails.Director}">Director</span></p>
+                                <p><strong><i class="fas fa-users me-2"></i>Actores:</strong> <span th:text="${movieDetails.Actors}">Actores</span></p>
+                                <p><strong><i class="fas fa-language me-2"></i>Idioma:</strong> <span th:text="${movieDetails.Language}">Idioma</span></p>
+                                <p><strong><i class="fas fa-globe me-2"></i>País:</strong> <span th:text="${movieDetails.Country}">País</span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h4 class="mb-0">Sinopsis</h4>
+                            </div>
+                            <div class="card-body">
+                                <p th:text="${movieDetails.Plot}">Sinopsis de la película</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h4 class="mb-0">Calificaciones</h4>
+                            </div>
+                            <div class="card-body">
+                                <div th:each="rating : ${movieDetails.Ratings}" class="mb-2">
+                                    <strong th:text="${rating.Source} + ':'"></strong>
+                                    <span th:text="${rating.Value}"></span>
+                                </div>
+                                <p><strong><i class="fas fa-trophy me-2"></i>Premios:</strong> <span th:text="${movieDetails.Awards}">Premios</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <a th:href="@{/consumeApiMovies(title=${title}, page=${page})}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Volver a resultados
+                </a>
+                <a href="/welcome" class="btn btn-primary ms-2">
+                    <i class="fas fa-home me-1"></i> Ir a Inicio
+                </a>
             </div>
         </div>
-
-        <!-- Mostrar el mensaje de éxito o error -->
-        <div th:if="${message}" class="alert alert-info">
-            <p th:text="${message}"></p>
-        </div>
-
-        <!-- Botón para regresar -->
-        <div class="back-button">
-            <button class="btn btn-secondary" onclick="history.back()">Regresar</button>
-        </div>
-
-        <form id="urlForm" action="/saveMovie" method="POST">
-            <!-- Campo oculto para imdbID -->
-            <input type="hidden" name="imbdID" id="imbdID">
-            <!-- Campo oculto para userId -->
-            <input type="hidden" name="userId" id="userId" th:value="${userId}">
-            <!-- Otros campos ocultos -->
-            <input type="hidden" name="title" id="title" th:value="${movieDetails['Title']}">
-            <input type="hidden" name="year" id="year" th:value="${movieDetails['Year']}">
-            <input type="hidden" name="director" id="director" th:value="${movieDetails['Director']}">
-            <input type="hidden" name="genre" id="genre" th:value="${movieDetails['Genre']}">
-            <input type="hidden" name="plot" id="plot" th:value="${movieDetails['Plot']}">
-            <input type="hidden" name="posterUrl" id="posterUrl" th:value="${movieDetails['Poster']}">
-            
-            <button type="submit" class="btn btn-primary">Guardar en Favoritos</button>
-        </form>
-        
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                // Extraer el último segmento de la URL
-                var imdbID = window.location.href.split('/').pop();
-                // Asignar el valor al campo oculto
-                document.getElementById('imbdID').value = imdbID;
-            });
-        </script>
-        
+    </div>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

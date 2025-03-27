@@ -1,16 +1,36 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-	<meta charset="ISO-8859-1">
-	<title>Registration Success</title>
-    <link rel="stylesheet" href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" />
-    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
-    <script src="/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<head th:replace="~{fragments/layout :: head('Registro Exitoso')}">
 </head>
-<body>
-	<div class="container text-center">
-		<h3>Listo, ya estas registrado</h3>
-		<h4><a th:href="@{/login}">Click aqui y regresa para iniciar sesion</a></h4>
-	</div>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow text-center">
+                    <div class="card-header bg-success text-white">
+                        <h2 class="mb-0">¡Registro Exitoso!</h2>
+                    </div>
+                    <div class="card-body p-5">
+                        <div class="mb-4">
+                            <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+                        </div>
+                        <h3 class="mb-3">Tu cuenta ha sido creada correctamente</h3>
+                        <p class="lead mb-4">Ahora puedes iniciar sesión con tus credenciales.</p>
+                        
+                        <div class="d-grid gap-3">
+                            <a th:href="@{/login}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-1"></i> Iniciar Sesión
+                            </a>
+                            <a th:href="@{/}" class="btn btn-outline-secondary">
+                                <i class="fas fa-home me-1"></i> Volver al Inicio
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

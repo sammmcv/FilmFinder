@@ -1,75 +1,115 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Buscar Libros</title>
-    <link rel="stylesheet" href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" />
-    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
-    <script src="/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <style>
-        .book-card {
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        }
-        .book-cover {
-            max-width: 100px;
-            height: auto;
-            border-radius: 5px;
-        }
-    </style>
+<head th:replace="~{fragments/layout :: head('Buscar Libros')}">
 </head>
 <body>
-    <div class="container mt-4">
-        <h1>Buscar Libro</h1>
-
-        <!-- Formulario de búsqueda -->
-        <form th:action="@{/consumeApiBooks}" method="get" class="d-flex mb-4">
-            <label for="title" class="me-3 align-self-center">Título del Libro:</label>
-            <input type="text" id="title" name="title" th:value="${title}" required placeholder="Tambien puedes buscar Autores:)" class="form-control me-3" style="max-width: 300px;">
-            <button type="submit" class="btn btn-primary">Buscar</button>
-        </form>
-
-        <hr>
-
-        <!-- Mostrar mensaje si no hay resultados pero solo cuando se realiza una búsqueda -->
-        <div th:if="${title != null and title != '' and (bookData == null or bookData.isEmpty())}" class="text-center">
-            <h3 class="text-danger">Búsqueda sin resultados</h3>
-        </div>
-        
-        <!-- Mostrar cada libro -->
-        <div th:if="${bookData != null && !bookData.isEmpty()}">
-            <h2 class="mb-3">Resultados</h2>
-            <!-- Botón regresar -->
-        <div class="text-center mt-4">
-            <a href="/welcome" class="btn btn-secondary">Regresar a Inicio</a>
-        </div>
-            <div th:each="book : ${bookData}" class="book-card mb-3">
-                <!-- Portada del libro -->
-                <img th:src="${book['thumbnail_url']}" alt="Portada del libro" class="book-cover" />
-
-                <!-- Información del libro -->
-                <div>
-                    <p><strong>Título:</strong> 
-                        <span th:text="${book['title']}"></span>
-                    </p>
-                    <p><strong>Autor:</strong> 
-                        <span th:text="${book['author_name'] != null ? book['author_name'][0] : 'Desconocido'}"></span>
-                    </p>
-                    <p><strong>Primera Publicación:</strong> 
-                        <span th:text="${book['first_publish_year'] != null ? book['first_publish_year'] : 'Desconocido'}"></span>
-                    </p>
-                </div>
+    <header th:replace="~{fragments/layout :: header}"></header>
+    
+    <div class="container py-4">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h2 class="mb-0"><i class="fas fa-book me-2"></i>Buscar Libros</h2>
+            </div>
+            <div class="card-body">
+                <!-- Formulario de búsqueda -->
+                <form th:action="@{/consumeApiBooks}" method="get" class="mb-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" id="title" name="title" th:value="${title}" required 
+                               placeholder="Ingresa el título o autor de un libro..." class="form-control">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-search me-1"></i> Buscar
+                        </button>
+                    </div>
+                    <small class="text-muted mt-2 d-block">También puedes buscar por autor o tema</small>
+                </form>
             </div>
         </div>
 
-        <!-- Botón regresar -->
-        <div class="text-center mt-4">
-            <a href="/welcome" class="btn btn-secondary">Regresar a Inicio</a>
+        <!-- Mostrar mensaje si no hay resultados pero solo cuando se realiza una búsqueda -->
+        <div th:if="${title != null and title != '' and (bookData == null or bookData.isEmpty())}" 
+             class="alert alert-warning text-center">
+            <i class="fas fa-exclamation-triangle me-2"></i> No se encontraron resultados para tu búsqueda.
+        </div>
+        
+        <!-- Resultados de la búsqueda -->
+        <div th:if="${bookData != null && !bookData.isEmpty()}" class="card shadow">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Resultados de la búsqueda</h3>
+                <span class="badge bg-success" th:text="${bookData.size() + ' libros encontrados'}"></span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div th:each="book : ${bookData}" class="col-md-6 mb-4">
+                        <div class="card h-100 shadow-sm hover-card">
+                            <div class="row g-0">
+                                <div class="col-md-4 p-3 text-center">
+                                    <img th:src="${book['thumbnail_url'] != null ? book['thumbnail_url'] : 'https://via.placeholder.com/100x150?text=No+Cover'}" 
+                                         alt="Portada del libro" class="img-fluid rounded book-cover" 
+                                         style="max-height: 180px; width: auto;">
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h5 class="card-title" th:text="${book['title']}">Título del libro</h5>
+                                        <p class="card-text">
+                                            <span class="badge bg-secondary me-2">Autor</span>
+                                            <span th:text="${book['author_name'] != null ? book['author_name'][0] : 'Desconocido'}"></span>
+                                        </p>
+                                        <p class="card-text">
+                                            <span class="badge bg-info text-dark me-2">Año</span>
+                                            <span th:text="${book['first_publish_year'] != null ? book['first_publish_year'] : 'Desconocido'}"></span>
+                                        </p>
+                                        <p class="card-text" th:if="${book['publisher'] != null}">
+                                            <span class="badge bg-primary me-2">Editorial</span>
+                                            <span th:text="${book['publisher'] != null ? book['publisher'][0] : ''}"></span>
+                                        </p>
+                                        <a th:if="${book['key'] != null}" 
+                                           th:href="@{'https://openlibrary.org' + ${book['key']}}" 
+                                           target="_blank" class="btn btn-sm btn-outline-success mt-2">
+                                            <i class="fas fa-external-link-alt me-1"></i> Ver más detalles
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <a href="/welcome" class="btn btn-secondary">
+                    <i class="fas fa-home me-1"></i> Regresar a Inicio
+                </a>
+            </div>
+        </div>
+        
+        <!-- Botón regresar (solo visible cuando no hay resultados) -->
+        <div th:if="${bookData == null || bookData.isEmpty()}" class="text-center mt-4">
+            <a href="/welcome" class="btn btn-secondary">
+                <i class="fas fa-home me-1"></i> Regresar a Inicio
+            </a>
         </div>
     </div>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    
+    <style>
+        .book-cover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .hover-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+        
+        .badge {
+            font-weight: 500;
+        }
+    </style>
 </body>
 </html>

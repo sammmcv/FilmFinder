@@ -1,4 +1,4 @@
-package net.codejavaspring;
+package net.codejavaspring.controller;
 
 import java.util.List;
 import java.io.IOException;
@@ -23,6 +23,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpSession;
 
+import net.codejavaspring.model.User;
+import net.codejavaspring.model.ApiMovies;
+import net.codejavaspring.model.SearchHistory;
+import net.codejavaspring.repository.ApiMoviesRepository;
+import net.codejavaspring.repository.SearchHistoryRepository;
+import net.codejavaspring.repository.UserRepository;
+import net.codejavaspring.security.CustomUserDetails;
+import net.codejavaspring.security.CustomUserDetailsService;
+import net.codejavaspring.service.ApiMoviesService;
+import net.codejavaspring.service.ApiBooksService;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.util.Map;
 import java.util.Random;
@@ -31,7 +42,7 @@ import java.util.stream.Collectors;
 @Controller
 public class AppController {
     @Autowired
-    private CustomUserDetailsService userRepository;
+    private CustomUserDetailsService userDetailsService;
 
     @Autowired
     private ApiMoviesRepository apiMoviesRepository;
@@ -43,7 +54,7 @@ public class AppController {
     private ApiMoviesService apiMoviesService;
 
     @Autowired
-    private ApiBooksService ApiBooksService;
+    private ApiBooksService apiBooksService;
 
     @Autowired
     private SearchHistoryRepository searchHistoryRepository;
@@ -283,6 +294,16 @@ public class AppController {
                 @RequestParam(required = false) String title,
                 Model model) {
         
+            // Verificar si el usuario tiene el rol de ADMIN
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
+            
+            // Si no es admin, redirigir a la página de bienvenida
+            if (!isAdmin) {
+                return "redirect:/welcome";
+            }
+            
             // Verifica si el usuario no ingresó un título y muestra solo el formulario
             if (title == null || title.trim().isEmpty()) {
                 model.addAttribute("bookData", null);
@@ -291,7 +312,7 @@ public class AppController {
             }
         
             // Llama al servicio para buscar libros
-            HashMap<String, Object> response = ApiBooksService.searchBooksWithPagination(title);
+            HashMap<String, Object> response = apiBooksService.searchBooksWithPagination(title);
         
             // Obtiene los datos de libros
             List<HashMap<String, Object>> books = (List<HashMap<String, Object>>) response.get("docs");
@@ -306,7 +327,7 @@ public class AppController {
         @GetMapping("/book/details/{id}")
         public String getBookDetails(@PathVariable("id") String bookId, Model model) {
             // Llamar al servicio para obtener los detalles del libro
-            HashMap<String, Object> bookDetails = ApiBooksService.getBookDetails(bookId);
+            HashMap<String, Object> bookDetails = apiBooksService.getBookDetails(bookId);
 
             // Agregar los detalles del libro al modelo
             model.addAttribute("bookDetails", bookDetails);
@@ -378,7 +399,7 @@ public class AppController {
                 String photoBase64 = oauth2User.getAttribute("photoBase64");
 
                 // Guarda los datos del usuario en la base de datos
-                userRepository.saveOAuth2User(email, name);
+                userDetailsService.saveOAuth2User(email, name);
 
                 model.addAttribute("photoBase64", photoBase64 != null ? photoBase64 : null); // Foto o nulo
                 model.addAttribute("fullName", name);
@@ -490,10 +511,10 @@ public class AppController {
 
     @PostMapping("/editUser/{id}")
         public String updateUser(@PathVariable("id") Long id,
-                                User userDetails,
-                                @RequestParam("profilePicture") MultipartFile imageFile) {
+                        User userDetails,
+                        @RequestParam(value = "imageFile", required = false) MultipartFile imageFile) {
             User user = userRepo.findById(id)
-                                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
+                        .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
 
             // Actualiza los datos del usuario
             user.setFirstName(userDetails.getFirstName());
@@ -502,7 +523,7 @@ public class AppController {
 
             // Si se ha cargado una nueva foto, actualízala
             try {
-                if (!imageFile.isEmpty()) {
+                if (imageFile != null && !imageFile.isEmpty()) {
                     user.setPhoto(imageFile.getBytes());  // guarda la imagen sin compresión
                 }
             } catch (IOException e) {

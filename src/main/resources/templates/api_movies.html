@@ -1,86 +1,137 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Buscar Peliculas</title>
-    <link rel="stylesheet" href="/webjars/bootstrap/5.3.0/css/bootstrap.min.css" />
-    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
-    <script src="/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head th:replace="~{fragments/layout :: head('Buscar Películas')}">
 </head>
 <body>
-    <h1 style="margin-right: 20px; margin-left: 20px;">Buscar Pelicula</h1>
-
-    <!-- formulario de busqueda -->
-    <form th:action="@{/consumeApiMovies}" method="get">
-        <label for="title" style="margin-right: 20px; margin-left: 20px;">Titulo de la pelicula:</label>
-        <input type="text" id="title" name="title" th:value="${title}" required placeholder="Ej. Inception">
-        <button type="submit">Buscar</button>
-    </form>
-
-    <hr>
-
-    <!-- mostrar mensaje si no hay resultados pero solo cuando se realiza una búsqueda -->
-    <div th:if="${title != null and title != '' and (movieData == null or movieData.isEmpty())}">
-        <h3 style="color: red; text-align: center;">Búsqueda sin resultados</h3>
-    </div>
+    <header th:replace="~{fragments/layout :: header}"></header>
     
-    <!-- detalles de la pelicula -->
-    <div th:if="${movieData != null && !movieData.isEmpty()}">
-        <!-- paginacion -->
-        <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
-            <a th:href="@{/consumeApiMovies(title=${title}, page=${currentPage - 1})}" 
-            th:if="${currentPage > 1}" 
-            class="btn btn-secondary" style="margin-right: 10px;">Anterior</a>
-        
-        <a th:href="@{/consumeApiMovies(title=${title}, page=${currentPage + 1})}" 
-            th:if="${currentPage < totalPages && movieData.size() == 10}" 
-            class="btn btn-primary">Siguiente</a>
-        </div>
-
-        <h2 style="margin-right: 20px; margin-left: 20px;">Resultados de la busqueda</h2>
-        
-        <div th:each="movie : ${movieData}" style="display: flex; align-items: center; margin-bottom: 20px;">
-            <img th:src="${movie['Poster']}" alt="Poster de la película" style="width: 100px; margin-right: 20px; margin-left: 20px;">
-            
-            <div>
-                <p><strong>Titulo:</strong>
-                    <a th:href="@{/movie/details/{id}(id=${movie['imdbID']})}" th:text="${movie['Title']}">Titulo de la pelicula</a>
-                </p>
-                <p><strong>Año:</strong> <span th:text="${movie['Year']}">Año</span></p>
-                <p><strong>IMDb ID:</strong> <span th:text="${movie['imdbID']}">ID de IMDb</span></p>
+    <div class="container py-4">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h2 class="mb-0">Buscar Película</h2>
+            </div>
+            <div class="card-body">
+                <!-- Formulario de búsqueda -->
+                <form th:action="@{/consumeApiMovies}" method="get" class="mb-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" id="title" name="title" th:value="${title}" required 
+                               placeholder="Ingresa el título de una película..." class="form-control">
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                    </div>
+                </form>
             </div>
         </div>
 
-        <!-- paginacion -->
-        <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
-            <a th:href="@{/consumeApiMovies(title=${title}, page=${currentPage - 1})}" 
-            th:if="${currentPage > 1}" 
-            class="btn btn-secondary" style="margin-right: 10px;">Anterior</a>
+        <!-- Mostrar mensaje si no hay resultados pero solo cuando se realiza una búsqueda -->
+        <div th:if="${title != null and title != '' and (movieData == null or movieData.isEmpty())}" 
+             class="alert alert-warning text-center">
+            <i class="fas fa-exclamation-triangle me-2"></i> No se encontraron resultados para tu búsqueda.
+        </div>
         
-        <a th:href="@{/consumeApiMovies(title=${title}, page=${currentPage + 1})}" 
-            th:if="${currentPage < totalPages && movieData.size() == 10}" 
-            class="btn btn-primary">Siguiente</a>
+        <!-- Detalles de la película -->
+        <div th:if="${movieData != null && !movieData.isEmpty()}" class="card shadow">
+            <div class="card-header bg-light">
+                <h3 class="mb-0">Resultados de la búsqueda</h3>
+            </div>
+            <div class="card-body">
+                <!-- Paginación superior -->
+                <div class="d-flex justify-content-center mb-4">
+                    <a th:href="@{/consumeApiMovies(title=${title}, page=${currentPage - 1})}" 
+                       th:if="${currentPage > 1}" 
+                       class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-chevron-left"></i> Anterior
+                    </a>
+                    
+                    <span class="align-self-center mx-2" th:text="'Página ' + ${currentPage}"></span>
+                    
+                    <a th:href="@{/consumeApiMovies(title=${title}, page=${currentPage + 1})}" 
+                       th:if="${currentPage < totalPages && movieData.size() == 10}" 
+                       class="btn btn-outline-primary ms-2">
+                        Siguiente <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+                
+                <!-- Lista de películas -->
+                <div class="row">
+                    <div th:each="movie : ${movieData}" class="col-md-6 mb-4">
+                        <div class="card h-100 movie-card">
+                            <div class="row g-0">
+                                <div class="col-md-4">
+                                    <img th:src="${movie['Poster'] != 'N/A' ? movie['Poster'] : 'https://via.placeholder.com/150x225?text=No+Poster'}" 
+                                         alt="Poster de la película" class="img-fluid rounded-start h-100" style="object-fit: cover;">
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <a th:href="@{/movie/details/{id}(id=${movie['imdbID']})}" 
+                                               th:text="${movie['Title']}" class="text-decoration-none">
+                                                Título de la película
+                                            </a>
+                                        </h5>
+                                        <p class="card-text"><strong>Año:</strong> <span th:text="${movie['Year']}">Año</span></p>
+                                        <p class="card-text"><small class="text-muted">IMDb ID: <span th:text="${movie['imdbID']}">ID</span></small></p>
+                                        <a th:href="@{/movie/details/{id}(id=${movie['imdbID']})}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-info-circle"></i> Ver detalles
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Paginación inferior -->
+                <div class="d-flex justify-content-center mt-4">
+                    <a th:href="@{/consumeApiMovies(title=${title}, page=${currentPage - 1})}" 
+                       th:if="${currentPage > 1}" 
+                       class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-chevron-left"></i> Anterior
+                    </a>
+                    
+                    <span class="align-self-center mx-2" th:text="'Página ' + ${currentPage}"></span>
+                    
+                    <a th:href="@{/consumeApiMovies(title=${title}, page=${currentPage + 1})}" 
+                       th:if="${currentPage < totalPages && movieData.size() == 10}" 
+                       class="btn btn-outline-primary ms-2">
+                        Siguiente <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de botones de acción -->
+        <div class="card shadow mt-4">
+            <div class="card-body text-center">
+                <!-- Botón solo visible para administradores -->
+                <div sec:authorize="hasRole('ROLE_ADMIN')" class="mb-3">
+                    <a href="/apiMovieFavoritesGeneral" class="btn btn-warning">
+                        <i class="fas fa-users me-1"></i> Ver Favoritos de Todos
+                    </a>
+                </div>
+
+                <!-- Botones visibles para todos los usuarios -->
+                <div sec:authorize="hasAnyRole('ROLE_USER', 'ROLE_ADMIN')" class="mb-3">
+                    <a href="/apiMovieFavorites" class="btn btn-warning me-2">
+                        <i class="fas fa-star me-1"></i> Ver Favoritos
+                    </a>
+                    <!-- Botón para ver el historial de búsquedas -->
+                    <a href="/movieHistory" class="btn btn-info">
+                        <i class="fas fa-history me-1"></i> Ver Historial de Búsquedas
+                    </a>
+                </div>
+
+                <!-- Botón regresar -->
+                <div>
+                    <a href="/welcome" class="btn btn-secondary">
+                        <i class="fas fa-home me-1"></i> Regresar a Inicio
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- Sección de botones de acción -->
-    <div style="margin: 20px; text-align: center;">
-        <!-- Botón solo visible para administradores -->
-        <div sec:authorize="hasRole('ROLE_ADMIN')">
-            <a href="/apiMovieFavoritesGeneral" class="btn btn-warning">Ver Favoritos de Todos</a>
-        </div>
-
-        <!-- Botón visible para todos los usuarios -->
-        <div sec:authorize="hasAnyRole('ROLE_USER', 'ROLE_ADMIN')">
-            <a href="/apiMovieFavorites" class="btn btn-warning">Ver Favoritos</a>
-            <!-- Botón para ver el historial de búsquedas -->
-            <a href="/movieHistory" class="btn btn-info">Ver Historial de Búsquedas</a>
-        </div>
-
-        <!-- Botón regresar -->
-        <div style="margin: 20px; text-align: center;">
-            <a href="/welcome" class="btn btn-secondary">Regresar a Inicio</a>
-        </div>
-    </div>
-
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

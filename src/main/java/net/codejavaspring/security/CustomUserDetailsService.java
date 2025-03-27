@@ -1,4 +1,4 @@
-package net.codejavaspring;
+package net.codejavaspring.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,6 +13,9 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+
+import net.codejavaspring.model.User;
+import net.codejavaspring.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.Base64;

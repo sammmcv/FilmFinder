@@ -1,8 +1,10 @@
 // con este repositorio implementado a la interfaz podemos hacer consultas CRUD de forma "automatica"
-package net.codejavaspring;
+package net.codejavaspring.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+
+import net.codejavaspring.model.User;
 
 
 public interface UserRepository extends JpaRepository<User, Long> {

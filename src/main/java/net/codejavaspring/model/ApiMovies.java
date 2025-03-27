@@ -1,4 +1,4 @@
-package net.codejavaspring;
+package net.codejavaspring.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

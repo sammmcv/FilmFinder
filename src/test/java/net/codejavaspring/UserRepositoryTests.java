@@ -8,6 +8,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 
+import net.codejavaspring.model.User;
+import net.codejavaspring.repository.UserRepository;
+
 @DataJpaTest
 @ActiveProfiles("test") // perfil de tests
 @Rollback // limpiar test, aunque no es necesario por la db volatil

@@ -1,4 +1,4 @@
-package net.codejavaspring;
+package net.codejavaspring.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,14 +13,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.client.RestTemplate;
 
+import net.codejavaspring.security.CustomUserDetailsService;
+
 
 @Configuration
 public class WebSecurityConfig {
-    
-    @Bean // resttemplate para el API 
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
 
     @Bean // con esto podemos trabajar con roles y credenciales
     public UserDetailsService userDetailsService() {
@@ -50,9 +47,9 @@ public class WebSecurityConfig {
                 .requestMatchers("/consumeApiMovies").authenticated()
                 .requestMatchers("/consumeApiBooks").hasRole("ADMIN")
                 .requestMatchers("/welcome").authenticated() // Autenticación para /welcome
-                .requestMatchers("/api").authenticated()
                 .requestMatchers("/movie/**").authenticated()
                 .requestMatchers("/editUser/**").hasRole("ADMIN")
+                .requestMatchers("/api/**").permitAll() // Permitir acceso a todos los endpoints de la API REST
                 .requestMatchers("/login", "/register", "/css/**", "/js/**", "/oauth2/authorization/**").permitAll() // Permite el acceso sin autenticación
                 .anyRequest().permitAll() // Permite el resto de rutas
             )

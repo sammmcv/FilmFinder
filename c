@@ -6,8 +6,4 @@ spring.datasource.password=root
 spring.jpa.properties.hibernate.format_sql=true
 spring.web.resources.add-mappings=true
 
-# Configuración para Google OAuth2
-# Add Google OAuth2 configuration
-spring.security.oauth2.client.registration.google.client-id=your-client-id
-spring.security.oauth2.client.registration.google.client-secret=your-client-secret
-spring.security.oauth2.client.registration.google.scope=email,profile
+# La configuración de Google OAuth2 ha sido eliminada

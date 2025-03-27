@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Debug Roles')}">
+</head>
+<body>
+    <header th:replace="~{fragments/layout :: header}"></header>
+    
+    <div class="container py-5">
+        <div class="card p-4 shadow">
+            <h1 class="mb-4">Debug Authentication Information</h1>
+            
+            <div class="alert alert-info">
+                <h4>Basic Info</h4>
+                <p><strong>Username:</strong> <span th:text="${username}"></span></p>
+                <p><strong>Authorities:</strong> <span th:text="${authorities}"></span></p>
+            </div>
+            
+            <div class="alert alert-warning" th:if="${principal instanceof T(net.codejavaspring.security.CustomUserDetails)}">
+                <h4>CustomUserDetails Info</h4>
+                <p><strong>User ID:</strong> <span th:text="${userId}"></span></p>
+                <p><strong>Full Name:</strong> <span th:text="${fullName}"></span></p>
+            </div>
+            
+            <div class="mt-4">
+                <a th:href="@{/welcome}" class="btn btn-primary">Back to Welcome</a>
+            </div>
+        </div>
+    </div>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
