@@ -53,8 +53,11 @@ public class ApiRestController {
             return ResponseEntity.badRequest().body(Map.of("error", "Usuario no encontrado"));
         }
         
-        // En una aplicación real, deberías verificar la contraseña con BCrypt
-        // Por simplicidad, asumimos que la autenticación es exitosa
+        // Add password verification using BCrypt
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Contraseña incorrecta"));
+        }
         
         Map<String, Object> response = new HashMap<>();
         response.put("id", user.getId());
