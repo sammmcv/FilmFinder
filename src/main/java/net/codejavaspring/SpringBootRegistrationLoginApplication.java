@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"net.codejavaspring", "net.codejavaspring.controller", 
-                              "net.codejavaspring.service", "net.codejavaspring.security",
-                              "net.codejavaspring.config"})
+                            "net.codejavaspring.service", "net.codejavaspring.security",
+                            "net.codejavaspring.config"})
 @EntityScan("net.codejavaspring.model")
 @EnableJpaRepositories("net.codejavaspring.repository")
 public class SpringBootRegistrationLoginApplication {

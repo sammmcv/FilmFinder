@@ -222,4 +222,27 @@ public class ApiRestController {
         List<SearchHistory> searchHistory = searchHistoryRepository.findByUserId(userId);
         return ResponseEntity.ok(searchHistory);
     }
+
+    // Endpoint para obtener historial de búsqueda de todos los usuarios
+    @GetMapping("/history/all")
+    public ResponseEntity<?> getAllSearchHistory() {
+        try {
+            List<SearchHistory> allSearchHistory = searchHistoryRepository.findAll();
+            return ResponseEntity.ok(allSearchHistory);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Error al obtener historial: " + e.getMessage()));
+        }
+    }
+    
+    // Add this new endpoint to get all favorite movies from all users
+    @GetMapping("/movies/favorites/all")
+    public ResponseEntity<?> getAllFavoriteMovies() {
+        try {
+            List<ApiMovies> allFavorites = apiMoviesRepository.findAll();
+            return ResponseEntity.ok(allFavorites);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Error al obtener favoritos: " + e.getMessage()));
+        }
+    }
+    
 }
